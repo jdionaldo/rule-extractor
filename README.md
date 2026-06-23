@@ -1,15 +1,19 @@
 # rule-extractor
 
-Extract discrete, **traceable** rule candidates from `.docx` policy and
-regulatory documents, flag conflicts between them, and browse everything in a
-local web UI — all running on your own machine.
+Extract discrete, **traceable** rule candidates from policy and regulatory
+documents, flag conflicts between them, and browse everything in a local web UI
+— all running on your own machine.
+
+Ingestion is format-agnostic: **`.docx`, `.pdf`, `.pptx`, `.txt`, `.md`** are
+read into a single uniform representation, so the rest of the pipeline doesn't
+care where a rule came from. Adding a new format is one reader function.
 
 The pipeline turns documents into three plain JSON artifacts:
 
 ```
-docx files  ->  spans       (verbatim source paragraphs)
-            ->  candidates  (one normalized rule each, linked to its spans)
-            ->  conflicts   (pairs of candidates that contradict)
+documents  ->  spans       (verbatim source blocks: paragraphs / pages / slides)
+           ->  candidates  (one normalized rule each, linked to its spans)
+           ->  conflicts   (pairs of candidates that contradict)
 ```
 
 Every rule points back to the exact source paragraph(s) it came from, so a
@@ -31,8 +35,9 @@ python -m venv .venv && source .venv/bin/activate
 pip install -r requirements.txt
 ```
 
-`requirements.txt` includes `python-docx`, `pydantic`, `fastapi`, `uvicorn`,
-`jinja2`, `anthropic`, and `httpx` (for Ollama).
+`requirements.txt` includes `pydantic`, `fastapi`, `uvicorn`, `jinja2`,
+`anthropic`, `httpx` (for Ollama), and the document readers `python-docx`,
+`pypdf`, and `python-pptx`.
 
 ### Make a sample document (optional)
 
@@ -61,7 +66,7 @@ Flags:
 
 | Flag | Default | Meaning |
 |---|---|---|
-| `--input` | (required) | A `.docx` file or a directory of `.docx` files. |
+| `--input` | (required) | A document or a directory of documents (`.docx`, `.pdf`, `.pptx`, `.txt`, `.md`). |
 | `--out` | (required) | Directory for the JSON artifacts. |
 | `--backend` | `anthropic` | `anthropic` or `ollama`. |
 | `--model` | per-backend | `claude-opus-4-8` (anthropic) / `llama3.1` (ollama). |
@@ -85,7 +90,7 @@ Open **http://localhost:8765**
 
 Routes:
 
-- `GET /` — upload form (drag-and-drop `.docx`) + run-config fields + **Run
+- `GET /` — upload form (drag-and-drop documents) + run-config fields + **Run
   extraction** button. Progress streams live into the page.
 - `POST /run` — runs the pipeline on uploaded/selected docs; streams progress.
 - `GET /candidates`, `/conflicts`, `/spans` — browsable tables of the latest run.
@@ -147,8 +152,9 @@ outbound network calls.
 
 ## How traceability works
 
-1. `docx_reader` reads each paragraph into a **Span** with a stable id like
-   `access_policy.docx::p0007` and the verbatim text.
+1. `ingest` reads each document into **Span**s (a paragraph, page block, or
+   slide block) with a stable id like `access_policy.docx::0007`, a `location`
+   label (`page 3`, `slide 2`, ...), and the verbatim text.
 2. `extractor` sends spans to the model and asks for rules that **cite the
    span_id(s)** they came from. References that don't match a real span are
    dropped; if the model cites none, the rule falls back to the chunk's spans so
@@ -167,7 +173,7 @@ llm.py                LLM backend abstraction (anthropic | ollama)
 make_sample.py        generate a sample policy .docx
 pipeline/
   models.py           pydantic models + artifact (de)serialization
-  docx_reader.py      .docx -> Spans
+  ingest.py           documents -> Spans (.docx/.pdf/.pptx/.txt/.md; pluggable)
   extractor.py        Spans -> RuleCandidates (LLM)
   conflicts.py        RuleCandidates -> Conflicts (LLM)
   runner.py           orchestration shared by CLI and server

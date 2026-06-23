@@ -29,6 +29,7 @@ from fastapi.responses import HTMLResponse, RedirectResponse, StreamingResponse
 from fastapi.staticfiles import StaticFiles
 from fastapi.templating import Jinja2Templates
 
+from pipeline import ingest
 from pipeline.models import (
     RunConfig,
     load_candidates,
@@ -74,13 +75,19 @@ async def run(
     Streams progress lines back to the browser as plain text.
     """
     # Persist any uploads under ./output/uploads and use that as the input.
-    saved = 0
+    valid = [
+        u
+        for u in files
+        if u.filename and u.filename.lower().endswith(ingest.SUPPORTED_EXTENSIONS)
+    ]
     UPLOAD_DIR.mkdir(parents=True, exist_ok=True)
-    for upload in files:
-        if not upload.filename:
-            continue
-        if not upload.filename.lower().endswith(".docx"):
-            continue
+    if valid:
+        # Fresh upload set: clear prior uploads so they aren't re-ingested.
+        for old in UPLOAD_DIR.iterdir():
+            if old.is_file():
+                old.unlink()
+    saved = 0
+    for upload in valid:
         dest = UPLOAD_DIR / Path(upload.filename).name  # strip any path traversal
         dest.write_bytes(await upload.read())
         saved += 1

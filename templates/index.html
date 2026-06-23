@@ -3,15 +3,17 @@
 {% block content %}
 <h1>Run extraction</h1>
 <p class="muted">
-  Upload <code>.docx</code> files (drag &amp; drop), or point at a folder of
-  documents already on this machine. The pipeline runs locally; the only
-  outbound call is to the selected LLM backend.
+  Upload documents (drag &amp; drop), or point at a folder of documents already
+  on this machine. Supported: <code>.docx</code>, <code>.pdf</code>,
+  <code>.pptx</code>, <code>.txt</code>, <code>.md</code>. The pipeline runs
+  locally; the only outbound call is to the selected LLM backend.
 </p>
 
 <form id="run-form" class="card">
   <div class="dropzone" id="dropzone">
-    <input type="file" id="files" name="files" accept=".docx" multiple>
-    <p>Drop .docx files here, or click to choose.</p>
+    <input type="file" id="files" name="files"
+           accept=".docx,.pdf,.pptx,.txt,.md" multiple>
+    <p>Drop documents here, or click to choose.</p>
     <ul id="filelist" class="filelist"></ul>
   </div>
 

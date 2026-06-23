@@ -32,10 +32,14 @@ class Span(BaseModel):
 
     span_id: str = Field(..., description="Stable id, e.g. 'policy.docx::p0042'.")
     doc: str = Field(..., description="Source document filename.")
-    index: int = Field(..., description="Zero-based paragraph index within the doc.")
+    index: int = Field(..., description="Zero-based running index within the doc.")
     text: str = Field(..., description="Verbatim paragraph text.")
     heading: Optional[str] = Field(
         None, description="Nearest preceding heading, for context."
+    )
+    location: Optional[str] = Field(
+        None,
+        description="Where in the source it came from, e.g. 'page 3', 'slide 2'.",
     )
     style: Optional[str] = Field(None, description="Paragraph style name, if any.")
 

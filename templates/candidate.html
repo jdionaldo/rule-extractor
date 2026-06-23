@@ -28,7 +28,7 @@
     {% else %}
       {% for s in source_spans %}
       <div class="source-span">
-        <div class="span-id mono">{{ s.span_id }}{% if s.heading %} &middot; {{ s.heading }}{% endif %}</div>
+        <div class="span-id mono">{{ s.span_id }}{% if s.location %} &middot; {{ s.location }}{% endif %}{% if s.heading %} &middot; {{ s.heading }}{% endif %}</div>
         <blockquote>{{ s.text }}</blockquote>
       </div>
       {% endfor %}

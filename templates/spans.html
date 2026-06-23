@@ -9,13 +9,14 @@
 {% else %}
 <table class="data">
   <thead>
-    <tr><th>Span ID</th><th>Doc</th><th>Section</th><th>Text</th></tr>
+    <tr><th>Span ID</th><th>Doc</th><th>Where</th><th>Section</th><th>Text</th></tr>
   </thead>
   <tbody>
     {% for s in spans %}
     <tr id="{{ s.span_id }}">
       <td class="mono">{{ s.span_id }}</td>
       <td class="mono">{{ s.doc }}</td>
+      <td>{{ s.location or "—" }}</td>
       <td>{{ s.heading or "—" }}</td>
       <td>{{ s.text }}</td>
     </tr>

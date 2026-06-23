@@ -28,13 +28,17 @@ from pipeline.runner import run_pipeline
 
 def build_parser() -> argparse.ArgumentParser:
     p = argparse.ArgumentParser(
-        description="Extract traceable rule candidates from .docx documents.",
+        description=(
+            "Extract traceable rule candidates from documents "
+            "(.docx, .pdf, .pptx, .txt, .md)."
+        ),
         formatter_class=argparse.ArgumentDefaultsHelpFormatter,
     )
     p.add_argument(
         "--input",
         required=True,
-        help="Path to a .docx file or a directory of .docx files.",
+        help="Path to a document or a directory of documents "
+        "(.docx, .pdf, .pptx, .txt, .md).",
     )
     p.add_argument(
         "--out",

@@ -14,8 +14,8 @@ from typing import Callable
 from llm import make_client
 
 from . import conflicts as conflicts_mod
-from . import docx_reader
 from . import extractor
+from . import ingest
 from .models import (
     RunArtifacts,
     RunConfig,
@@ -43,18 +43,35 @@ def run_pipeline(
     if not input_path.exists():
         raise FileNotFoundError(f"Input path does not exist: {input_path}")
 
-    # 1. Read source documents into verbatim spans.
-    doc_paths = docx_reader.collect_docx_paths(input_path, limit=config.limit)
+    # 1. Read source documents into verbatim spans. A single unreadable file
+    #    (corrupt, encrypted, ...) is noted and skipped rather than aborting.
+    doc_paths = ingest.collect_paths(input_path, limit=config.limit)
     if not doc_paths:
-        raise FileNotFoundError(f"No .docx files found under: {input_path}")
+        raise FileNotFoundError(
+            f"No supported documents found under: {input_path} "
+            f"(supported: {', '.join(ingest.SUPPORTED_EXTENSIONS)})"
+        )
     progress(f"Found {len(doc_paths)} document(s)")
-    run.docs = [p.name for p in doc_paths]
 
     spans = []
+    ingested: list[str] = []
     for path in doc_paths:
-        doc_spans = docx_reader.read_docx(path)
-        progress(f"Read {path.name}: {len(doc_spans)} paragraph(s)")
+        try:
+            doc_spans = ingest.read_file(path)
+        except ingest.IngestError as exc:
+            note = f"Skipped {path.name}: {exc}"
+            progress(note)
+            run.notes.append(note)
+            continue
+        progress(f"Read {path.name}: {len(doc_spans)} block(s)")
+        ingested.append(path.name)
         spans.extend(doc_spans)
+
+    if not spans:
+        raise FileNotFoundError(
+            f"No readable documents under: {input_path} (all were skipped)."
+        )
+    run.docs = ingested
     run.span_count = len(spans)
 
     # 2. Extract rule candidates (the only stage that needs the LLM, plus 3).
