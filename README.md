@@ -47,6 +47,18 @@ To try the pipeline without supplying your own docs:
 python make_sample.py        # writes ./sample_docs/access_policy.docx
 ```
 
+### Verify the install (no API key, no network)
+
+Run the self-test. It exercises the full pipeline (ingestion → extraction →
+conflict detection → artifacts) against a built-in fake LLM backend, so it
+costs nothing and needs no API key, network, or Ollama:
+
+```bash
+python selftest.py
+```
+
+You should see a list of `[PASS]` checks ending in `SELF-TEST PASSED`.
+
 ---
 
 ## Mode 1 — Local CLI (default)
