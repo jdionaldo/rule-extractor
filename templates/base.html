@@ -1,0 +1,40 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>{% block title %}rule-extractor{% endblock %}</title>
+  <!-- Vendored locally so the UI works air-gapped (no external CDN). -->
+  <link rel="stylesheet" href="/static/app.css">
+</head>
+<body>
+  <header class="topbar">
+    <a class="brand" href="/">rule-extractor</a>
+    <nav>
+      <a href="/">Run</a>
+      <a href="/candidates">Candidates</a>
+      <a href="/conflicts">Conflicts</a>
+      <a href="/spans">Spans</a>
+    </nav>
+  </header>
+
+  {% if run %}
+  <div class="runbar">
+    Latest run <code>{{ run.run_id }}</code> &middot;
+    backend <strong>{{ run.config.backend }}</strong> ({{ run.config.model }}) &middot;
+    {{ run.candidate_count }} rules &middot;
+    {{ run.conflict_count }} conflicts &middot;
+    {{ run.span_count }} spans &middot;
+    docs: {{ run.docs | join(", ") }}
+  </div>
+  {% endif %}
+
+  <main class="content">
+    {% block content %}{% endblock %}
+  </main>
+
+  <footer class="footer">
+    Single-user local tool &middot; loopback only &middot; not a deployable service.
+  </footer>
+</body>
+</html>

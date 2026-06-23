@@ -1,0 +1,52 @@
+{% extends "base.html" %}
+{% block title %}{{ candidate.rule_id }} — rule-extractor{% endblock %}
+{% block content %}
+<p><a href="/candidates">&larr; All candidates</a></p>
+<h1>{{ candidate.rule_id }}
+  <span class="pill mod-{{ candidate.modality }}">{{ candidate.modality }}</span>
+</h1>
+
+<!-- Traceability view: the extracted rule next to its verbatim source. -->
+<div class="trace">
+  <section class="trace-col card">
+    <h2>Extracted rule</h2>
+    <p class="statement">{{ candidate.statement }}</p>
+    <dl class="meta">
+      <dt>Doc</dt><dd class="mono">{{ candidate.doc }}</dd>
+      <dt>Actor</dt><dd>{{ candidate.actor or "—" }}</dd>
+      <dt>Condition</dt><dd>{{ candidate.condition or "—" }}</dd>
+      <dt>Topic</dt><dd>{{ candidate.topic or "—" }}</dd>
+      <dt>Rationale</dt><dd>{{ candidate.rationale or "—" }}</dd>
+      <dt>Confidence</dt><dd>{{ "%.2f"|format(candidate.confidence) }}</dd>
+    </dl>
+  </section>
+
+  <section class="trace-col card">
+    <h2>Verbatim source {% if source_spans %}<span class="count">{{ source_spans | length }}</span>{% endif %}</h2>
+    {% if not source_spans %}
+      <p class="muted">No matching source spans found.</p>
+    {% else %}
+      {% for s in source_spans %}
+      <div class="source-span">
+        <div class="span-id mono">{{ s.span_id }}{% if s.heading %} &middot; {{ s.heading }}{% endif %}</div>
+        <blockquote>{{ s.text }}</blockquote>
+      </div>
+      {% endfor %}
+    {% endif %}
+  </section>
+</div>
+
+{% if related_conflicts %}
+<section class="card">
+  <h2>Conflicts involving this rule</h2>
+  {% for k in related_conflicts %}
+  {% set other = k.rule_id_b if k.rule_id_a == candidate.rule_id else k.rule_id_a %}
+  <p class="conflict-line sev-{{ k.severity }}">
+    <span class="pill kind">{{ k.kind }}</span>
+    <span class="pill sev-{{ k.severity }}">{{ k.severity }}</span>
+    vs <a href="/candidate/{{ other }}">{{ other }}</a> — {{ k.explanation }}
+  </p>
+  {% endfor %}
+</section>
+{% endif %}
+{% endblock %}

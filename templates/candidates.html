@@ -1,0 +1,31 @@
+{% extends "base.html" %}
+{% block title %}Candidates — rule-extractor{% endblock %}
+{% block content %}
+<h1>Rule candidates <span class="count">{{ candidates | length }}</span></h1>
+
+{% if not candidates %}
+  <p class="muted">No candidates yet. <a href="/">Run an extraction</a> first.</p>
+{% else %}
+<table class="data">
+  <thead>
+    <tr>
+      <th>ID</th><th>Modality</th><th>Statement</th>
+      <th>Actor</th><th>Topic</th><th>Doc</th><th>Conf.</th>
+    </tr>
+  </thead>
+  <tbody>
+    {% for c in candidates %}
+    <tr>
+      <td><a href="/candidate/{{ c.rule_id }}">{{ c.rule_id }}</a></td>
+      <td><span class="pill mod-{{ c.modality }}">{{ c.modality }}</span></td>
+      <td>{{ c.statement }}</td>
+      <td>{{ c.actor or "—" }}</td>
+      <td>{{ c.topic or "—" }}</td>
+      <td class="mono">{{ c.doc }}</td>
+      <td>{{ "%.2f"|format(c.confidence) }}</td>
+    </tr>
+    {% endfor %}
+  </tbody>
+</table>
+{% endif %}
+{% endblock %}

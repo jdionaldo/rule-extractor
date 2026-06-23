@@ -1,0 +1,106 @@
+{% extends "base.html" %}
+{% block title %}Run extraction — rule-extractor{% endblock %}
+{% block content %}
+<h1>Run extraction</h1>
+<p class="muted">
+  Upload <code>.docx</code> files (drag &amp; drop), or point at a folder of
+  documents already on this machine. The pipeline runs locally; the only
+  outbound call is to the selected LLM backend.
+</p>
+
+<form id="run-form" class="card">
+  <div class="dropzone" id="dropzone">
+    <input type="file" id="files" name="files" accept=".docx" multiple>
+    <p>Drop .docx files here, or click to choose.</p>
+    <ul id="filelist" class="filelist"></ul>
+  </div>
+
+  <div class="field">
+    <label for="source_path">…or a folder path on this machine</label>
+    <input type="text" id="source_path" name="source_path"
+           value="{{ default_source }}" placeholder="/path/to/docs">
+    <small class="muted">Ignored if you upload files above.</small>
+  </div>
+
+  <div class="grid">
+    <div class="field">
+      <label for="backend">Backend</label>
+      <select id="backend" name="backend">
+        <option value="anthropic">anthropic (API)</option>
+        <option value="ollama">ollama (offline)</option>
+      </select>
+    </div>
+    <div class="field">
+      <label for="model">Model</label>
+      <input type="text" id="model" name="model"
+             placeholder="claude-opus-4-8 / llama3.1">
+    </div>
+    <div class="field">
+      <label for="limit">Doc limit</label>
+      <input type="number" id="limit" name="limit" min="1" placeholder="all">
+    </div>
+    <div class="field checkbox">
+      <label><input type="checkbox" name="detect_conflicts" checked> Detect conflicts</label>
+    </div>
+  </div>
+
+  <button type="submit" id="run-btn">Run extraction</button>
+</form>
+
+<section id="progress-wrap" class="card" hidden>
+  <h2>Progress</h2>
+  <pre id="progress" class="progress"></pre>
+</section>
+
+<script>
+  // Minimal vanilla JS — no build step, no external assets.
+  const fileInput = document.getElementById('files');
+  const dropzone = document.getElementById('dropzone');
+  const filelist = document.getElementById('filelist');
+
+  function renderFiles() {
+    filelist.innerHTML = '';
+    for (const f of fileInput.files) {
+      const li = document.createElement('li');
+      li.textContent = f.name;
+      filelist.appendChild(li);
+    }
+  }
+  fileInput.addEventListener('change', renderFiles);
+
+  ['dragover', 'dragenter'].forEach(ev =>
+    dropzone.addEventListener(ev, e => { e.preventDefault(); dropzone.classList.add('over'); }));
+  ['dragleave', 'drop'].forEach(ev =>
+    dropzone.addEventListener(ev, e => { e.preventDefault(); dropzone.classList.remove('over'); }));
+  dropzone.addEventListener('drop', e => {
+    fileInput.files = e.dataTransfer.files;
+    renderFiles();
+  });
+
+  const form = document.getElementById('run-form');
+  form.addEventListener('submit', async (e) => {
+    e.preventDefault();
+    const btn = document.getElementById('run-btn');
+    const wrap = document.getElementById('progress-wrap');
+    const out = document.getElementById('progress');
+    btn.disabled = true;
+    wrap.hidden = false;
+    out.textContent = '';
+
+    const data = new FormData(form);
+    // Normalize the checkbox to the value the server expects.
+    data.set('detect_conflicts', form.detect_conflicts.checked ? 'on' : 'off');
+
+    const resp = await fetch('/run', { method: 'POST', body: data });
+    const reader = resp.body.getReader();
+    const decoder = new TextDecoder();
+    while (true) {
+      const { value, done } = await reader.read();
+      if (done) break;
+      out.textContent += decoder.decode(value, { stream: true });
+      out.scrollTop = out.scrollHeight;
+    }
+    btn.disabled = false;
+  });
+</script>
+{% endblock %}

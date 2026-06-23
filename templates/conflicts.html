@@ -1,0 +1,32 @@
+{% extends "base.html" %}
+{% block title %}Conflicts — rule-extractor{% endblock %}
+{% block content %}
+<h1>Conflicts <span class="count">{{ conflicts | length }}</span></h1>
+
+{% if not conflicts %}
+  <p class="muted">No conflicts recorded. <a href="/">Run an extraction</a> first.</p>
+{% else %}
+{% for k in conflicts %}
+<div class="card conflict sev-{{ k.severity }}">
+  <div class="conflict-head">
+    <span class="pill kind">{{ k.kind }}</span>
+    <span class="pill sev-{{ k.severity }}">{{ k.severity }}</span>
+    <code>{{ k.conflict_id }}</code>
+  </div>
+  <p class="explanation">{{ k.explanation }}</p>
+  <div class="pair">
+    {% for rid in [k.rule_id_a, k.rule_id_b] %}
+    {% set c = candidates.get(rid) %}
+    <div class="pair-rule">
+      <a href="/candidate/{{ rid }}">{{ rid }}</a>
+      {% if c %}
+        <span class="pill mod-{{ c.modality }}">{{ c.modality }}</span>
+        <span>{{ c.statement }}</span>
+      {% endif %}
+    </div>
+    {% endfor %}
+  </div>
+</div>
+{% endfor %}
+{% endif %}
+{% endblock %}

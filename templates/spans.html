@@ -1,0 +1,26 @@
+{% extends "base.html" %}
+{% block title %}Spans — rule-extractor{% endblock %}
+{% block content %}
+<h1>Source spans <span class="count">{{ spans | length }}</span></h1>
+<p class="muted">Verbatim source paragraphs. Every rule traces back to these.</p>
+
+{% if not spans %}
+  <p class="muted">No spans yet. <a href="/">Run an extraction</a> first.</p>
+{% else %}
+<table class="data">
+  <thead>
+    <tr><th>Span ID</th><th>Doc</th><th>Section</th><th>Text</th></tr>
+  </thead>
+  <tbody>
+    {% for s in spans %}
+    <tr id="{{ s.span_id }}">
+      <td class="mono">{{ s.span_id }}</td>
+      <td class="mono">{{ s.doc }}</td>
+      <td>{{ s.heading or "—" }}</td>
+      <td>{{ s.text }}</td>
+    </tr>
+    {% endfor %}
+  </tbody>
+</table>
+{% endif %}
+{% endblock %}
