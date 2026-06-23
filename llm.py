@@ -75,15 +75,24 @@ class AnthropicClient:
     def generate_json(
         self, *, system: str, prompt: str, schema: Dict[str, Any]
     ) -> Dict[str, Any]:
-        # output_config.format constrains the response to valid JSON matching
-        # the schema. No assistant prefill (removed on Opus 4.6+).
-        response = self._client.messages.create(
+        # Adaptive thinking is enabled for higher extraction fidelity: the model
+        # reasons about modality, scope, and span attribution before committing
+        # to the structured output. `output_config.format` still constrains the
+        # response to valid JSON matching the schema (structured outputs work
+        # with extended thinking). No assistant prefill (removed on Opus 4.6+).
+        #
+        # Thinking tokens count toward the output budget, so max_tokens is
+        # generous and we stream — the SDK's recommended path for thinking /
+        # larger outputs, which also avoids HTTP timeouts on the longer calls.
+        with self._client.messages.stream(
             model=self.model,
-            max_tokens=16000,
+            max_tokens=32000,
+            thinking={"type": "adaptive"},
             system=system,
             messages=[{"role": "user", "content": prompt}],
             output_config={"format": {"type": "json_schema", "schema": schema}},
-        )
+        ) as stream:
+            response = stream.get_final_message()
         text = next(
             (b.text for b in response.content if getattr(b, "type", None) == "text"),
             "",

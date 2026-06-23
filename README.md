@@ -111,7 +111,10 @@ implementations, selected with `--backend`:
 ### `anthropic` (default)
 
 Uses the Anthropic API. The key is read from the `ANTHROPIC_API_KEY`
-environment variable. Default model `claude-opus-4-8`.
+environment variable. Default model `claude-opus-4-8`. Requests use **adaptive
+thinking** (the model reasons about modality, scope, and span attribution
+before emitting the structured output) for higher extraction fidelity, and
+stream the response so the longer calls don't hit HTTP timeouts.
 
 ```bash
 python extract.py --input ./docs --out ./output --backend anthropic
